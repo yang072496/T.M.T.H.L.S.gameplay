@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>T.M.T.H.L.S. - 最終搜捕</title>
+    <style>
+        :root { --paper: #d2b48c; --ink: #1a1a1a; --danger: #b22222; }
+        body { 
+            background: #000; color: #fff; font-family: "Noto Serif TC", serif; 
+            margin: 0; overflow: hidden; touch-action: manipulation;
+            width: 100vw; height: 100vh;
+        }
+
+        /* 密碼登入介面 */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 2000; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center;
+        }
+        .login-box { width: 80%; max-width: 300px; padding: 20px; border: 2px solid var(--danger); }
+        .login-box h1 { font-size: 1.2rem; color: var(--danger); margin-bottom: 20px; }
+        .login-box p { font-size: 0.8rem; color: #888; margin-bottom: 20px; }
+        #pass-input { 
+            width: 100%; padding: 10px; background: #222; border: 1px solid #444; 
+            color: #fff; text-align: center; font-size: 1.5rem; letter-spacing: 5px;
+            box-sizing: border-box; margin-bottom: 15px;
+        }
+        #login-btn { 
+            width: 100%; padding: 10px; background: var(--danger); color: #fff; 
+            border: none; font-weight: bold; cursor: pointer; 
+        }
+
+        /* 頂部固定 UI */
+        #ui-layer { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 120px;
+            background: linear-gradient(to bottom, rgba(0,0,0,1) 70%, rgba(0,0,0,0)); 
+            z-index: 200; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            border-bottom: 4px solid var(--danger); pointer-events: none;
+        }
+        .status-text { 
+            font-size: 1.1rem; letter-spacing: 1px; color: var(--danger); font-weight: 900; 
+            text-shadow: 2px 2px 0px #000; margin-bottom: 10px;
+        }
+        #progress-dots { font-size: 1.8rem; letter-spacing: 15px; color: #fff; line-height: 1; }
+
+        /* 搜查區域 */
+        #game-area { width: 100%; height: 100%; position: relative; background: #050505; z-index: 50; }
+
+        /* 文字物件 */
+        .floating-text { position: absolute; white-space: nowrap; font-weight: bold; user-select: none; }
+        .target { color: #fff; font-size: 1.8rem; text-decoration: underline; z-index: 150; text-shadow: 0 0 10px #fff; cursor: pointer; }
+        .noise { color: #222; font-size: 1rem; opacity: 0.7; z-index: 10; pointer-events: none; }
+        .poetry { color: #ff00ff; font-size: 1.3rem; opacity: 0.4; z-index: 20; font-style: italic; pointer-events: none; }
+
+        /* 彈窗：扣押報告 (修正長文案滾動) */
+        #report-overlay { 
+            display: none; position: fixed; top: 55%; left: 50%; transform: translate(-50%, -50%);
+            width: 85%; max-width: 320px; max-height: 70vh; background: var(--paper); color: var(--ink);
+            padding: 20px; border: 5px double var(--ink); z-index: 1000; box-shadow: 0 0 100px #000;
+            overflow-y: auto; 
+        }
+        #report-overlay h2 { margin: 0 0 10px 0; border-bottom: 2px solid var(--ink); font-size: 1.1rem; position: sticky; top: 0; background: var(--paper); }
+        #report-overlay p { font-size: 0.95rem; line-height: 1.5; margin-bottom: 15px; white-space: pre-wrap; }
+        #report-overlay button { width: 100%; padding: 12px; background: var(--ink); color: #fff; border: none; font-weight: bold; position: sticky; bottom: 0; }
+
+        /* 最終結局 */
+        #final-overlay { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            z-index: 3000; justify-content: center; align-items: center; text-align: center; padding: 30px; box-sizing: border-box;
+        }
+        .final-text { font-family: "標楷體", serif; font-size: 1.5rem; line-height: 1.8; white-space: pre-wrap; }
+
+        .flash-white { animation: flashEffect 0.3s forwards; }
+        @keyframes flashEffect { 0% { background: #fff; } 100% { background: #000; } }
+    </style>
+</head>
+<body id="main-body">
+
+    <div id="login-screen">
+        <div class="login-box">
+            <h1>警政系統登入</h1>
+            <p>提示：現實中的證物日期是關鍵</p>
+            <input type="number" id="pass-input" placeholder="000">
+            <button id="login-btn" onclick="checkPass()">進入搜捕模式</button>
+        </div>
+    </div>
+
+    <div id="ui-layer">
+        <div class="status-text">指令：徹底清查匪諜證物 (台史博2F)</div>
+        <div id="progress-dots">○○○○</div>
+    </div>
+
+    <div id="game-area"></div>
+
+    <div id="report-overlay">
+        <h2 id="report-title">證物扣押</h2>
+        <div id="scroll-content">
+            <p id="report-content"></p>
+        </div>
+        <button onclick="closeReport()">繼續搜查</button>
+    </div>
+
+    <div id="final-overlay" onclick="handleFinalClick()">
+        <div class="final-text" id="final-msg"></div>
+    </div>
+
+    <audio id="bgm" src="creepy.mp3" loop></audio> 
+    <audio id="snd-click" src="button03a.mp3"></audio> 
+    <audio id="snd-shot" src="game_explosion1.mp3"></audio> 
+    <audio id="snd-error" src="blip01.mp3"></audio>
+
+<script>
+    const gameArea = document.getElementById('game-area');
+    let collectedCount = 0;
+    let finalStep = 0;
+    let gameActive = false;
+    let collectedNames = []; // 追蹤已收取的證物名稱
+
+    // 使用樣板字串以保留長文案換行
+    const targets = [
+        { name: "雨夜花", info: `這首歌不僅是台灣民謠的經典，更是一段被政權「整編」的傷痕記憶。
+
+物件背景： 原由周添旺作詞、鄧雨賢作曲，描述一名女性哀婉的命運。
+
+轉折點： 二戰期間，日治政府為了動員台灣人投身戰場，將其重新填詞為《榮譽的軍夫》。
+
+歷史命運： 戰後，這首曲子因曾被改編為日本軍歌，在特殊的政治氛圍下遭列為禁歌。原本哀傷的純情曲，竟成了被封印的戰爭殘影。` },
+        { name: "無花果", info: `由知名作家吳濁流（《亞細亞的孤兒》作者）所著。這是一部半自傳體的小說，記錄了作者從日治時期到戰後初期的見聞。
+被禁原因： 書中後半段以第一人稱視角，詳盡且真實地描述了二二八事件發生時，台灣社會的混亂、軍隊的屠殺以及知識分子的恐懼。
+1968 年在《台灣文藝》連載時，就遭到特務機關的嚴密監控。
+
+1970 年正式出版後，隨即被列為禁書沒收。
+
+這本書被認為是「醜化政府形象」，直到 1980 年代後期（解嚴前後）才終於能在台灣合法出版。它反映了本土作家在極權下，試圖為歷史留下見證的掙扎。` },
+        { name: "美麗島雜誌", info: `—— 組織化的群眾運動火藥庫
+
+創刊背景： 1979 年 8 月創刊，由黃信介擔任發行人，許信良、呂秀蓮、林義雄等黨外精英集結而成。
+
+「沒有黨名的黨」： 它不只是一本刊物，更是一個實質的政治組織。它在全台灣各城市設立分處（服務處），以此串聯基層力量。
+
+雜誌內容貼近大眾，論述充滿煽動性與改革熱情，最高發行量曾達 10 萬冊以上。` },
+        { name: "被出賣的台灣", info: `作者葛超智是當時美國駐台副領事。他親眼目睹了 1947 年的二二八事件，並將其整理成第一手調查報告。
+被禁原因：書中嚴厲批評當時行政長官陳儀的腐敗與國民政府軍隊的殘暴。名「被出賣」暗示了台灣在戰後被交給國民政府是一場悲劇，這觸動了當局最敏感的神經，被指控為「鼓吹台獨」與「污衊元首」。
+此書於 1965 年在美國出版，旋即被列為台灣的「頭號禁書」。
+
+在戒嚴時期，若被發現持有此書，往往會面臨嚴重的政治迫害。
+
+當時許多留學生在海外讀到這本書後深受震撼，成為他們投入民主運動的啟蒙書。它在地下流傳的過程，本身就是一段台灣爭取真相的歷史。` }
+    ];
+
+    const noises = ["情書", "收音機", "毛筆", "茶杯", "碎紙", "課本", "墨水", "收據", "名片", "日曆", "茶葉", "信封", "報紙", "菸草", "桌椅", "藥水", "證件"];
+    const poems = ["人講你是一條蕃薯", "破開有黃色的肉", "流著白白的血", "你是不是咧哭？", "去死", "去死", "人講你是蕃薯", "干乾會曉叩頭"];
+
+    function checkPass() {
+        const val = document.getElementById('pass-input').value;
+        if(val === "228") {
+            document.getElementById('login-screen').style.display = 'none';
+            gameActive = true;
+            initGame();
+        } else {
+            alert("密碼錯誤，請檢查現實證物提示。");
+        }
+    }
+
+    function initGame() {
+        playSnd('bgm'); // 觸發播放
+        setInterval(() => { if(gameActive) spawnNoise(); }, 150);
+        setInterval(() => { if(gameActive) spawnPoem(); }, 600);
+        spawnTargets();
+    }
+
+    function spawnTargets() {
+        targets.forEach((t, index) => {
+            setTimeout(() => {
+                if(gameActive) createFloatingText(t.name, "target", () => collect(t));
+            }, index * 2500);
+        });
+    }
+
+    function spawnNoise() {
+        const text = noises[Math.floor(Math.random() * noises.length)];
+        createFloatingText(text, "noise", null);
+    }
+
+    function spawnPoem() {
+        const text = poems[Math.floor(Math.random() * poems.length)];
+        createFloatingText(text, "poetry", null);
+    }
+
+    function createFloatingText(content, type, clickFn) {
+        const el = document.createElement('div');
+        el.className = `floating-text ${type}`;
+        el.innerText = content;
+        el.style.top = (Math.random() * 70 + 15) + "vh";
+        el.style.left = "-250px";
+        if (clickFn) el.onclick = clickFn;
+        gameArea.appendChild(el);
+
+        let pos = -250;
+        let speed = (type === "target") ? 4 : (Math.random() * 3 + 7);
+        
+        const moveId = setInterval(() => {
+            pos += speed;
+            el.style.left = pos + "px";
+            if (pos > window.innerWidth) {
+                clearInterval(moveId);
+                el.remove();
+                // 只有還沒被收集的目標才重新生成
+                if (type === "target" && !collectedNames.includes(content) && gameActive) {
+                    setTimeout(() => createFloatingText(content, type, clickFn), 800);
+                }
+            }
+        }, 16);
+    }
+
+    function collect(target) {
+        if (collectedNames.includes(target.name)) return;
+        
+        playSnd('snd-click');
+        document.getElementById('report-title').innerText = "證物扣押：" + target.name;
+        document.getElementById('report-content').innerText = target.info;
+        document.getElementById('report-overlay').style.display = 'block';
+        document.getElementById('report-overlay').scrollTop = 0; // 重置捲軸位置
+        
+        collectedCount++;
+        collectedNames.push(target.name);
+        
+        let dots = "";
+        for(let i=0; i<4; i++) dots += (i < collectedCount) ? "●" : "○";
+        document.getElementById('progress-dots').innerText = dots;
+
+        document.querySelectorAll('.target').forEach(el => {
+            if(el.innerText === target.name) el.remove();
+        });
+    }
+
+    function closeReport() {
+        document.getElementById('report-overlay').style.display = 'none';
+        if (collectedCount === 4) {
+            gameActive = false; 
+            triggerEnd();
+        }
+    }
+
+    function triggerEnd() {
+        const final = document.getElementById('final-overlay');
+        final.style.display = 'flex';
+        final.style.background = "#fff";
+        document.getElementById('final-msg').innerText = "【搜捕公告】\n1947年，警方於台史博二樓破獲匪諜行動。\n現場查獲大量非法禁書。嫌疑犯陳志銘企圖滅證，當場逮捕。";
+        document.getElementById('final-msg').style.color = "#000";
+        finalStep = 1;
+    }
+
+    function handleFinalClick() {
+        const body = document.getElementById('main-body');
+        if (finalStep === 1) {
+            playSnd('snd-shot');
+            body.classList.add('flash-white');
+            document.getElementById('final-overlay').style.background = "#000";
+            document.getElementById('final-msg').innerText = "【判決執行】\n陳志銘，涉嫌傳播危險思想，罪證確鑿。\n判處死刑，即刻執行。";
+            document.getElementById('final-msg').style.color = "#ff0000";
+            finalStep = 2;
+        } else if (finalStep === 2) {
+            playSnd('snd-shot');
+            document.getElementById('final-msg').innerText = "他最後的聲音渺小如蚊子...無人在意......\n但在卷宗裡，他只是一個被劃掉的名字。\n\n結案。";
+            document.getElementById('final-msg').style.color = "#666";
+            finalStep = 3;
+        } else if (finalStep === 3) {
+            location.href = "關卡目錄.html";
+        }
+    }
+
+    function playSnd(id) {
+        const s = document.getElementById(id);
+        if (s) {
+            s.currentTime = 0;
+            s.play().catch(e => console.log("Audio play blocked"));
+        }
+    }
+</script>
+</body>
+</html>
