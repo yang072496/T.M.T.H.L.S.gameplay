@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T.M.T.H.L.S. - 3-1 禁曲審訊</title>
+    <style>
+        :root { --paper: #d2b48c; --ink: #1a1a1a; --danger: #b22222; }
+        body { background: #000; color: #fff; font-family: "Noto Serif TC", serif; margin: 0; min-height: 100vh; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+
+        /* 畫面晃動 */
+        @keyframes shake {
+            0% { transform: translate(2px, 2px); }
+            25% { transform: translate(-2px, -2px); }
+            50% { transform: translate(-2px, 2px); }
+            75% { transform: translate(2px, -2px); }
+            100% { transform: translate(0, 0); }
+        }
+        .apply-shake { animation: shake 0.1s ease-in-out infinite; }
+
+        /* 上半部：佔畫面 1/2 的波浪容器 */
+        .wave-container { 
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 50vh; 
+            justify-content: center; align-items: flex-end; gap: 4px; padding-bottom: 20px;
+            background: linear-gradient(to bottom, rgba(178, 34, 34, 0.15), transparent);
+            pointer-events: none; z-index: 1; box-sizing: border-box;
+        }
+
+        .wave-bar { 
+            width: 5px; height: 10%; background: #ff0000; 
+            animation: wave 0.8s ease-in-out infinite; border-radius: 2px 2px 0 0;
+        }
+
+        @keyframes wave {
+            0%, 100% { height: 10%; opacity: 0.3; }
+            50% { height: 85%; opacity: 1; }
+        }
+
+        /* 階段 1: 音樂播放佈局 */
+        #music-phase { 
+            width: 100%; height: 100vh; display: flex; flex-direction: column; 
+            justify-content: flex-end; align-items: center; padding-bottom: 8vh; 
+            box-sizing: border-box; text-align: center;
+        }
+        
+        .record-player { 
+            width: 160px; height: 160px; background: #222; border-radius: 50%; 
+            margin: 20px auto; border: 8px solid #111; position: relative; 
+            cursor: pointer; z-index: 5; transition: transform 0.3s;
+        }
+        .record-player.playing { animation: rotate 4s linear infinite; }
+        .record-center { width: 30px; height: 30px; background: #ffcc00; border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        #confirm-btn { 
+            display: none; margin-top: 20px; padding: 15px 40px; background: #fff; 
+            color: #000; border: none; font-weight: bold; cursor: pointer; letter-spacing: 2px;
+        }
+
+        /* 階段 2: 審訊公文 (手機優化) */
+        #interrogation-phase { 
+            display: none; width: 88vw; max-width: 400px; background: var(--paper); 
+            padding: 25px; box-shadow: 8px 8px 0 #000; position: relative; z-index: 10; color: var(--ink);
+        }
+        .header { border-bottom: 2px solid var(--ink); text-align: center; font-weight: bold; margin-bottom: 15px; padding-bottom: 5px; }
+        .stat-row { display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 10px; }
+        .bar-bg { width: 80px; height: 10px; background: #999; border: 1px solid #000; }
+        #doubt-fill { height: 100%; width: 0%; background: var(--danger); transition: width 0.3s; }
+        .timer-line { width: 100%; height: 6px; background: #ccc; margin-bottom: 20px; }
+        #timer-fill { height: 100%; width: 100%; background: var(--ink); }
+
+        .lyrics-q { font-size: 1.1rem; margin-bottom: 25px; line-height: 1.6; }
+        .blank { border-bottom: 2px solid var(--danger); color: var(--danger); font-weight: bold; padding: 0 5px; }
+
+        .options { display: grid; grid-template-columns: 1fr; gap: 12px; } /* 手機改為單欄更好按 */
+        .opt-btn { background: none; border: 1.5px solid var(--ink); padding: 12px; cursor: pointer; font-family: inherit; font-size: 1rem; font-weight: bold; }
+
+        /* 全螢幕色塊結局 */
+        #poster-overlay { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            z-index: 9999; justify-content: center; align-items: center; text-align: center; cursor: pointer;
+            padding: 30px; box-sizing: border-box;
+        }
+        .poster-text { font-family: "標楷體", serif; font-size: 1.8rem; line-height: 1.6; max-width: 90%; }
+
+        .door-break { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #fff; z-index: 1000; display: none; justify-content: center; align-items: center; font-size: 2rem; font-weight: bold; }
+    </style>
+</head>
+<body id="main-body">
+
+    <div id="music-phase">
+        <div class="wave-container" id="wave-visual">
+            <div class="wave-bar" style="animation-delay: 0.1s"></div><div class="wave-bar" style="animation-delay: 0.3s"></div>
+            <div class="wave-bar" style="animation-delay: 0.5s"></div><div class="wave-bar" style="animation-delay: 0.2s"></div>
+            <div class="wave-bar" style="animation-delay: 0.7s"></div><div class="wave-bar" style="animation-delay: 0.4s"></div>
+            <div class="wave-bar" style="animation-delay: 0.6s"></div><div class="wave-bar" style="animation-delay: 0.2s"></div>
+            <div class="wave-bar" style="animation-delay: 0.8s"></div><div class="wave-bar" style="animation-delay: 0.1s"></div>
+            <div class="wave-bar" style="animation-delay: 0.4s"></div><div class="wave-bar" style="animation-delay: 0.6s"></div>
+            <div class="wave-bar" style="animation-delay: 0.3s"></div><div class="wave-bar" style="animation-delay: 0.9s"></div>
+            <div class="wave-bar" style="animation-delay: 0.5s"></div><div class="wave-bar" style="animation-delay: 0.2s"></div>
+            <div class="wave-bar" style="animation-delay: 0.7s"></div><div class="wave-bar" style="animation-delay: 0.4s"></div>
+            <div class="wave-bar" style="animation-delay: 0.1s"></div><div class="wave-bar" style="animation-delay: 0.3s"></div>
+        </div>
+        <p style="padding: 0 30px; margin-bottom: 20px;">深夜裡，你悄悄放起了那首禁忌的旋律...</p>
+        <div class="record-player" id="player" onclick="toggleMusic()">
+            <div class="record-center"></div>
+        </div>
+        <p id="music-status" style="margin: 15px 0;">點擊唱片播放《望春風》</p>
+        <button id="confirm-btn" onclick="policeBreakIn()">確認聽完</button>
+        <audio id="bgm" src="望春風.mp3"></audio> 
+    </div>
+
+    <div id="door-break" class="door-break">砰！警察破門而入！</div>
+
+    <div id="interrogation-phase">
+        <div class="stat-row">
+            <span>案件編號：3-1-徐</span>
+            <span>懷疑值：<div class="bar-bg"><div id="doubt-fill"></div></div></span>
+        </div>
+        <div class="header">思想審查調查表</div>
+        <div class="timer-line"><div id="timer-fill"></div></div>
+        <div id="lyrics-display" class="lyrics-q"></div>
+        <div class="options" id="options-box"></div>
+    </div>
+
+    <div id="poster-overlay" onclick="handlePosterClick()">
+        <div class="poster-text" id="poster-msg"></div>
+    </div>
+
+<script>
+    let doubt = 0;
+    let timer;
+    let currentQ;
+    let gameState = "ANSWERING"; 
+
+    const questions = [
+        { q: "獨夜無伴守燈下，（　　）對面吹", a: ["清風", "微風", "秋風", "冷風"], c: 0 },
+        { q: "十七八，未出嫁，（　　）著少年家", a: ["看", "見", "等", "想"], c: 1 },
+        { q: "果然標緻（　　），誰家人子弟？", a: ["面色紅", "面肉白", "心肝好", "氣質佳"], c: 1 },
+        { q: "想欲問伊（　　），心內彈琵琶", a: ["沒機會", "驚歹勢", "太害羞", "不敢講"], c: 1 },
+        { q: "想欲（　　）做翁婿，意愛在心內", a: ["官爺", "富商", "郎君", "良人"], c: 2 }
+    ];
+
+    function toggleMusic() {
+        const p = document.getElementById('player');
+        const audio = document.getElementById('bgm');
+        const wave = document.getElementById('wave-visual');
+        if (audio.paused) {
+            audio.play();
+            p.classList.add('playing');
+            wave.style.display = 'flex';
+            document.getElementById('music-status').innerText = "播放中...細細品味...";
+            setTimeout(() => { document.getElementById('confirm-btn').style.display = 'inline-block'; }, 2000);
+        }
+    }
+
+    function policeBreakIn() {
+        const body = document.getElementById('main-body');
+        document.getElementById('bgm').pause();
+        body.classList.add('apply-shake');
+        document.getElementById('music-phase').style.display = 'none';
+        const db = document.getElementById('door-break');
+        db.style.display = 'flex';
+
+        setTimeout(() => {
+            body.classList.remove('apply-shake');
+            db.style.display = 'none';
+            document.getElementById('interrogation-phase').style.display = 'block';
+            startInterrogation();
+        }, 1200);
+    }
+
+    function startInterrogation() {
+        currentQ = questions[Math.floor(Math.random() * questions.length)];
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        document.getElementById('lyrics-display').innerHTML = currentQ.q.replace("（　　）", "<span class='blank'>？</span>");
+        const box = document.getElementById('options-box');
+        box.innerHTML = "";
+        currentQ.a.forEach((opt, i) => {
+            const btn = document.createElement('button');
+            btn.className = "opt-btn";
+            btn.innerText = opt;
+            btn.onclick = () => check(i);
+            box.appendChild(btn);
+        });
+
+        let sec = 250;
+        clearInterval(timer);
+        timer = setInterval(() => {
+            sec--;
+            document.getElementById('timer-fill').style.width = (sec/250)*100 + "%";
+            if (sec <= 0) { clearInterval(timer); handleWrong(); }
+        }, 100);
+    }
+
+    function check(idx) {
+        clearInterval(timer);
+        if (idx === currentQ.c) {
+            gameState = "FINAL_STORY";
+            showColorOverlay("徐先生被公開處刑的事情被印上報紙，政府想殺雞儆猴......", "WHITE");
+        } else {
+            handleWrong();
+        }
+    }
+
+    function handleWrong() {
+        doubt++;
+        document.getElementById('doubt-fill').style.width = (doubt/3)*100 + "%";
+        if (doubt >= 3) {
+            gameState = "GAME_OVER";
+            showColorOverlay("徐先生被判定為思想犯，即刻處刑。", "BLACK");
+        } else {
+            gameState = "WRONG_HINT";
+            showColorOverlay("警察：還敢嘴硬！回去聽清楚再說！", "RED");
+        }
+    }
+
+    function showColorOverlay(msg, type) {
+        const overlay = document.getElementById('poster-overlay');
+        const text = document.getElementById('poster-msg');
+        overlay.style.display = 'flex';
+        text.innerText = msg;
+
+        if (type === "WHITE") {
+            overlay.style.background = "#fff";
+            text.style.color = "#1a1a1a";
+        } else if (type === "RED") {
+            overlay.style.background = "#b22222";
+            text.style.color = "#fff";
+        } else {
+            overlay.style.background = "#000";
+            text.style.color = "#ff0000";
+        }
+    }
+
+    function handlePosterClick() {
+        if (gameState === "GAME_OVER") {
+            localStorage.removeItem('formosa_stage');
+            location.href = "index.html";
+        } else if (gameState === "WRONG_HINT") {
+            document.getElementById('poster-overlay').style.display = 'none';
+            resetToMusic();
+        } else if (gameState === "FINAL_STORY") {
+            localStorage.setItem('formosa_stage', 5);
+            location.href = "關卡目錄.html";
+        }
+    }
+
+    function resetToMusic() {
+        document.getElementById('interrogation-phase').style.display = 'none';
+        document.getElementById('music-phase').style.display = 'block';
+        document.getElementById('player').classList.remove('playing');
+        document.getElementById('wave-visual').style.display = 'none';
+        document.getElementById('music-status').innerText = "點擊唱片重新聆聽...";
+    }
+</script>
+</body>
+</html>

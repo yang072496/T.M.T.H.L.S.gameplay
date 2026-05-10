@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T.M.T.H.L.S. - 2-1 抓姦</title>
+    <style>
+        :root { --army-green: #4b5320; --blood-red: #8b0000; --pixel-white: #eeeeee; }
+        body { 
+            background: #000; color: var(--pixel-white); 
+            font-family: "Courier New", Courier, monospace; /* 模擬 8-bit 感 */
+            margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh;
+            transition: background 1s ease; /* 背景變色動畫 */
+            overflow: hidden;
+        }
+        
+        /* 劇烈震動特效 */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        /* 警報閃爍 */
+        @keyframes danger-flash {
+            0% { background-color: #000; }
+            50% { background-color: #ff0000; }
+            100% { background-color: #000; }
+        }
+
+        .apply-shake { animation: shake 0.15s infinite; }
+        .apply-flash { animation: danger-flash 0.1s infinite; }
+
+        /* 8-bit 格點背景效果 */
+        .grid-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), 
+                              linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 4px 4px; pointer-events: none; z-index: 10;
+        }
+
+        .battle-box { 
+            width: 95%; max-width: 450px; background: rgba(20, 20, 20, 0.9); 
+            border: 4px solid var(--pixel-white); padding: 15px; position: relative; z-index: 20;
+        }
+
+        .officer-frame {
+            width: 120px; height: 150px; border: 2px solid var(--pixel-white);
+            margin: 0 auto 15px; background: #333; display: flex;
+            justify-content: center; align-items: center; text-align: center; font-size: 0.7rem;
+        }
+
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.8rem; }
+        .bar-bg { width: 100px; height: 10px; background: #333; border: 1px solid #fff; display: inline-block; }
+        .bar-fill { height: 100%; width: 0%; transition: width 0.3s; }
+        #anger-fill { background: var(--blood-red); }
+        #dissatisfy-fill { background: #ffcc00; }
+
+        #dialogue-box { 
+            min-height: 100px; border: 2px solid #555; padding: 10px; margin-bottom: 15px;
+            font-size: 0.9rem; line-height: 1.5; background: rgba(0,0,0,0.8);
+        }
+
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .option-btn { 
+            background: none; border: 2px solid var(--pixel-white); color: var(--pixel-white);
+            padding: 10px; cursor: pointer; font-size: 0.8rem; text-align: left;
+        }
+        .option-btn:hover { background: var(--pixel-white); color: #000; }
+        .option-btn:disabled { opacity: 0.3; }
+
+        #final-screen {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; padding: 20px; box-sizing: border-box; z-index: 100;
+        }
+
+/* 預警畫面樣式 */
+#warning-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: #000;
+    z-index: 9999; /* 確保在最上層 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.warning-box {
+    border: 2px solid #ff0000;
+    padding: 30px;
+    max-width: 400px;
+}
+
+.warning-title {
+    color: #ff0000;
+    font-weight: bold;
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+}
+
+.warning-text {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #eee;
+    margin-bottom: 30px;
+}
+
+.warning-btn {
+    background: #fff;
+    color: #000;
+    border: none;
+    padding: 10px 30px;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: inherit;
+}
+.warning-btn:hover { background: #ff0000; color: #fff; }
+    </style>
+</head>
+<body>
+
+<div id="warning-overlay">
+    <div class="warning-box">
+        <div class="warning-title">HEALTH WARNING</div>
+        <div class="warning-text">
+            本關卡包含強烈閃光、劇烈震動與快速色彩變換。<br><br>
+            若您有<b>癲癇病史</b>或對強光敏感，請謹慎評估自身狀況後再開始遊戲。若在遊玩過程中感到任何不適，請立即停止。
+        </div>
+        <button class="warning-btn" onclick="acceptWarning()">已明白，進入遊戲</button>
+    </div>
+</div>
+
+
+<div class="grid-overlay"></div>
+
+<div class="battle-box" id="main-box">
+    <div class="stat-row">
+        <span>不滿值 (答對) <div class="bar-bg"><div id="dissatisfy-fill" class="bar-fill"></div></div></span>
+        <span>憤怒值 (答錯) <div class="bar-bg"><div id="anger-fill" class="bar-fill"></div></div></span>
+    </div>
+
+    <div class="officer-frame">[ 山上番跤 <br> 軍官形象圖 ]</div>
+
+    <div id="dialogue-box">
+        詩芶鯉㐻和陳銘雄私下進行約會的時候，被山上番跤逮個正著。身為陳銘雄的你即將跟山上番進行一場死亡問答...
+    </div>
+
+    <div class="options-grid" id="options">
+        <button class="option-btn" onclick="startQuiz()" style="grid-column: span 2; text-align: center;">...開始問答</button>
+    </div>
+
+    <div id="final-screen">
+        <div id="final-text"></div>
+        <button class="option-btn" onclick="nextLevel()" style="margin-top:20px; text-align: center;">進入下一回憶</button>
+    </div>
+</div>
+
+<script>
+
+function acceptWarning() {
+    const warning = document.getElementById('warning-overlay');
+    // 增加一個簡單的淡出效果
+    warning.style.transition = "opacity 0.5s";
+    warning.style.opacity = "0";
+    setTimeout(() => {
+        warning.style.display = 'none';
+    }, 500);
+}
+
+    let currentStep = 0;
+    let anger = 0;
+    let dissatisfy = 0;
+
+    const quiz = [
+        {
+            q: "1.第一次霧社事件的主要頭目是誰?",
+            options: ["A.賽德克巴萊", "B.莫那魯道", "C.林慶台", "D.巴萊"],
+            correct: 1,
+            okMsg: "非常好...一個漢仔還擔心番的事......",
+            failMsg: "無知的東西...連這點事都不知道嗎？"
+        },
+        {
+            q: "2.你可知道地位階級之分?我可是低位高在上的日本之子!!! 而你只是......",
+            options: ["A.可憐台灣狗", "B.一個窮農夫", "C.偷別人妻子的敗類", "D.一個人"],
+            correct: -1, 
+            okMsg: "哈哈大笑了幾聲：真好-認清現實了嗎? 狗",
+            failMsg: "哈哈大笑了幾聲：真好-認清現實了嗎? 垃圾"
+        },
+        {
+            q: "3.臺灣總督府民政局長水野遵在1895年提出，應在臺灣實施與日本內地相同的什麼制度?",
+            options: ["A.衡度量", "B.量度衡", "C.度量衡", "D.衡量度"],
+            correct: 2,
+            okMsg: "還算有常識...蟑螂",
+            failMsg: "連度量衡都分不清...果然是雜狗。"
+        },
+        {
+            q: "4.《保甲條例》中規定了所謂的？制度，意思就是如果某人犯罪，所有人必須連帶責任？",
+            options: ["A.連坐責任", "B.甲連責任", "C.全懲", "D.保罰"],
+            correct: 0,
+            okMsg: "哪隻狗...和你說的?",
+            failMsg: "看來你沒什麼鄰居，連這個也不知道。"
+        },
+        {
+            q: "5.一個台灣蟑螂...為甚麼和我的'未婚妻'在一起了? 你的目的是什麼?? 她的錢嗎? 真可憐...",
+            options: ["A.(不語，只擔心看了看愛人)", "B.才不是...我愛著她...!", "C.看來是因為大人的無能(笑)", "D.日本狗-(憤怒回應)"],
+            correct: 99 
+        }
+    ];
+
+    function updateBars() {
+        document.getElementById('anger-fill').style.width = (anger * 25) + "%";
+        document.getElementById('dissatisfy-fill').style.width = (dissatisfy * 25) + "%";
+        // 背景隨題數與憤怒值變紅，最高到第五題全紅
+        let redIntensity = Math.min(255, (currentStep * 50) + (anger * 20));
+        document.body.style.backgroundColor = `rgb(${redIntensity}, 0, 0)`;
+    }
+
+    function startQuiz() { showQuestion(); }
+
+    function showQuestion() {
+        const item = quiz[currentStep];
+        document.getElementById('dialogue-box').innerText = item.q;
+        const optContainer = document.getElementById('options');
+        optContainer.innerHTML = "";
+
+        item.options.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = "option-btn";
+            btn.innerText = opt;
+            btn.onclick = () => handleAnswer(index);
+            optContainer.appendChild(btn);
+        });
+        updateBars();
+    }
+
+    function handleAnswer(choice) {
+        if (currentStep === 4) {
+            handleFinal(choice);
+            return;
+        }
+
+        const item = quiz[currentStep];
+        if (item.correct === -1) {
+            document.getElementById('dialogue-box').innerText = item.okMsg;
+        } else if (choice === item.correct) {
+            dissatisfy++;
+            document.getElementById('dialogue-box').innerText = item.okMsg;
+        } else {
+            anger++;
+            document.getElementById('dialogue-box').innerText = item.failMsg;
+        }
+
+        currentStep++;
+        const optContainer = document.getElementById('options');
+        optContainer.innerHTML = `<button class="option-btn" onclick="showQuestion()" style="grid-column: span 2; text-align: center;">下一個問題...</button>`;
+        updateBars();
+    }
+
+function handleFinal(choice) {
+    const overlay = document.getElementById('final-screen');
+    const fText = document.getElementById('final-text');
+    const mainBox = document.getElementById('main-box');
+    const body = document.body;
+
+    if (choice === 2 || choice === 3) { // 選擇挑釁 C 或 D (憤怒紅)
+        mainBox.classList.add('apply-shake');
+        body.classList.add('apply-flash');
+
+        setTimeout(() => {
+            overlay.style.display = 'flex';
+            fText.innerHTML = "<h1 style='color:#ff0000; text-shadow: 0 0 10px #ff0000;'>放肆！！</h1>" + 
+                "軍官山上番跤勃然大怒，訓斥眼前一點價值都沒有的陳銘雄，並命人將你抓起來！<br><br>" +
+                "離開時他給了詩芶鯉㐻一個冷漠的神情，而她只顧著看著陳銘雄被帶走的背影...";
+            mainBox.classList.remove('apply-shake');
+            body.classList.remove('apply-flash');
+            body.style.backgroundColor = "#400"; // 停留在深紅色
+        }, 800);
+        
+    } else { // 選擇 A 或 B (憂鬱藍)
+        // 平滑轉場到深藍色調
+        body.style.transition = "background 2s ease"; 
+        body.style.backgroundColor = "#001a33"; // 舒服的深藍色系
+        
+        setTimeout(() => {
+            overlay.style.display = 'flex';
+            // 將按鈕與邊框稍微染藍，增加整體感
+            overlay.style.borderColor = "#0066cc";
+            
+            fText.innerHTML = "<h2 style='color:#66b3ff;'>沈默與無力...</h2>" +
+                "山上番跤發出冷冽的笑聲。陳銘雄低著頭，直接被粗魯地帶走。<br><br>" +
+                "離開時軍官給了詩芶鯉㐻一個冷漠的神情...<br>而她始終沒有移開視線，默默看著陳銘雄逐漸遠去的背影。";
+        }, 500);
+    }
+}
+
+    function nextLevel() {
+        localStorage.setItem('formosa_stage', 3); 
+               location.href = "關卡目錄.html"; 
+    }
+</script>
+</body>
+</html>

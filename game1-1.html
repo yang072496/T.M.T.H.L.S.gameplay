@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T.M.T.H.L.S. - 1-1 械鬥</title>
+    <style>
+        :root { --war-red: #cc0000; --gold: #ffcc00; --dark-gray: #1a1a1a; }
+        body { background: #000; color: #fff; font-family: "Microsoft JhengHei", sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
+        
+       /* 極輕微晃動動畫：位移控制在 0.5px~1px */
+@keyframes shake {
+    0% { transform: translate(0px, 0px) rotate(0deg); }
+    20% { transform: translate(-0.5px, 0.5px) rotate(-0.2deg); }
+    40% { transform: translate(-1px, -0.5px) rotate(0.2deg); }
+    60% { transform: translate(1px, 0.5px) rotate(0deg); }
+    80% { transform: translate(-0.5px, -0.5px) rotate(-0.2deg); }
+    100% { transform: translate(0px, 0px) rotate(0deg); }
+}
+
+/* 將動畫時長設為 1.5 秒，並改為只執行一次（或配合 JS 觸發） */
+.apply-shake { 
+    animation: shake 1.5s ease-in-out; 
+}
+
+        /* 瀕死閃爍（睜眼閉眼感） */
+        @keyframes blinking {
+            0% { opacity: 1; }
+            20% { opacity: 0; }
+            50% { opacity: 0; }
+            80% { opacity: 0; }
+        }
+
+        .apply-shake { animation: shake 0.2s ease-in-out infinite; }
+        .apply-blink { animation: blinking 1.5s infinite; }
+
+        .battle-container { width: 90%; max-width: 400px; border: 3px solid var(--war-red); background: var(--dark-gray); padding: 20px; box-shadow: 0 0 20px rgba(204, 0, 0, 0.5); position: relative; transition: transform 0.1s; }
+        
+        h2 { color: var(--gold); text-align: center; text-transform: uppercase; letter-spacing: 3px; border-bottom: 2px solid var(--war-red); padding-bottom: 10px; margin-top: 0; }
+
+        .status-bar { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; }
+        .hp-container { width: 45%; background: #333; height: 10px; border: 1px solid #fff; margin-top: 5px; }
+        .hp-fill { background: var(--war-red); height: 100%; width: 100%; transition: width 0.5s; }
+
+        #narrative { height: 120px; background: rgba(0,0,0,0.5); padding: 10px; font-size: 0.9rem; line-height: 1.6; border-left: 4px solid var(--gold); overflow-y: auto; margin-bottom: 20px; }
+
+        .battle-actions { display: flex; justify-content: space-around; margin-bottom: 15px; }
+        .action-btn { background: #333; border: 2px solid #fff; color: #fff; padding: 10px 20px; cursor: pointer; transition: 0.2s; flex: 1; margin: 0 5px; font-family: inherit; }
+        .action-btn:hover { background: var(--war-red); border-color: var(--gold); }
+        .action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .round-info { text-align: center; color: var(--gold); font-size: 0.8rem; margin-top: 10px; }
+
+        #ending-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 100; padding: 20px; box-sizing: border-box; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .ending-text { color: #fff; line-height: 1.8; margin-bottom: 20px; }
+        .system-msg { color: #00ff00; font-family: monospace; font-size: 0.8rem; }
+        .btn-next { background: var(--gold); color: #000; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+    </style>
+</head>
+<body id="game-body">
+
+<div class="battle-container" id="battle-box">
+    <h2>1-1 衝突：械鬥</h2>
+    
+    <div class="status-bar">
+        <div>陳二狗 (泉州)<div class="hp-container"><div id="hp-player" class="hp-fill"></div></div></div>
+        <div style="text-align:right;">對手 (漳州)<div class="hp-container"><div id="hp-enemy" class="hp-fill"></div></div></div>
+    </div>
+
+    <div id="narrative">
+        你看著眼前喧鬧的群眾，鋤頭與木棍在空中揮舞。林椋凄在遠處提著便當，擔心地看著你...
+    </div>
+
+    <div class="battle-actions">
+        <button class="action-btn" onclick="play(0)">剪刀</button>
+        <button class="action-btn" onclick="play(1)">石頭</button>
+        <button class="action-btn" onclick="play(2)">布</button>
+    </div>
+
+    <div class="round-info">回合數: <span id="round-count">0</span> / 5</div>
+
+    <div id="ending-overlay">
+        <div class="ending-text" id="ending-content"></div>
+        <div class="system-msg" id="system-comment"></div>
+        <button class="btn-next" id="final-btn" onclick="triggerDeathBlink()">返回目錄</button>
+    </div>
+</div>
+
+<script>
+    let round = 0;
+    let playerHP = 100;
+    let enemyHP = 100;
+    const choices = ["剪刀", "石頭", "布"];
+    const nav = document.getElementById('narrative');
+    const battleBox = document.getElementById('battle-box');
+
+    function play(playerChoice) {
+        if (round >= 5) return;
+
+        const enemyChoice = Math.floor(Math.random() * 3);
+        round++;
+        document.getElementById('round-count').innerText = round;
+
+        // 觸發短暫晃動 (1秒)
+        battleBox.classList.add('apply-shake');
+        setTimeout(() => {
+            battleBox.classList.remove('apply-shake');
+        }, 1000);
+
+        let result = "";
+        if (playerChoice === enemyChoice) {
+            result = "平手！雙方僵持不下。再次揮動雙手！";
+            round--; 
+        } else if (
+            (playerChoice === 0 && enemyChoice === 2) ||
+            (playerChoice === 1 && enemyChoice === 0) ||
+            (playerChoice === 2 && enemyChoice === 1)
+        ) {
+            result = "你贏了！重重一擊打在對手身上。";
+            enemyHP -= 20;
+        } else {
+            result = "你輸了！被對手推倒在地。";
+            playerHP -= 20;
+        }
+
+        document.getElementById('hp-player').style.width = playerHP + "%";
+        document.getElementById('hp-enemy').style.width = enemyHP + "%";
+        nav.innerHTML = `你出了 <b>${choices[playerChoice]}</b>，對方出 <b>${choices[enemyChoice]}</b>。<br>${result}`;
+
+        if (round >= 5) {
+            setTimeout(showEnding, 1500);
+        }
+    }
+
+    function showEnding() {
+        const overlay = document.getElementById('ending-overlay');
+        const content = document.getElementById('ending-content');
+        const comment = document.getElementById('system-comment');
+
+        overlay.style.display = 'flex';
+        content.innerHTML = `在混亂的械鬥中，陳二狗瞥見了林椋凄，心中咒罵著：「該死，這個熟番怎麼在這！」<br><br>就在這時，一柄鋤頭擊中了林椋凄的致命部位，她應聲倒下。她用最後的氣息看著陳二狗，心中只有一個念頭：下世與你繼續相愛...<br><br>三年後，陳二狗也在出門途中失足中跌下山坡死亡。`;
+        comment.innerText = `系統: 原來這就是初戀的臭酸感嗎???...噁...`;
+    }
+
+    function triggerDeathBlink() {
+        const body = document.getElementById('game-body');
+        const btn = document.getElementById('final-btn');
+        
+        // 禁用按鈕防止重複點擊
+        btn.disabled = true;
+        btn.innerText = "意識模糊中...";
+
+        // 觸發忽明忽暗特效
+        body.classList.add('apply-blink');
+
+        // 維持約 3 秒後跳轉
+        setTimeout(() => {
+            finishGame();
+        }, 3000);
+    }
+
+    function finishGame() {
+        localStorage.setItem('formosa_stage', 2);
+        location.href = "關卡目錄.html";
+    }
+</script>
+
+</body>
+</html>
