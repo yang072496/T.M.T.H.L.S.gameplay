@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在臺人滲 - 測試清單</title>
+    <style>
+        body { background: #000; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        
+        /* 標題樣式，縮小底部邊距以貼近副標題 */
+        h1 { border-bottom: 1px solid #fff; padding-bottom: 10px; margin-bottom: 10px; }
+        
+        /* 副標題樣式 */
+        .subtitle { font-size: 1.1rem; color: #fff; margin-bottom: 30px; letter-spacing: 2px; }
+
+        .menu { width: 85%; max-width: 350px; }
+        .level {
+            padding: 15px; margin: 10px 0; border: 1px solid #fff; text-align: center;
+            cursor: pointer; text-decoration: none; display: block; color: #fff;
+        }
+        /* 灰字灰框 (未解鎖) */
+        .locked { color: #666 !important; border-color: #444 !important; cursor: not-allowed; }
+        .reset-btn { margin-top: 40px; background: none; color: #ff0000; border: 1px solid #ff0000; padding: 5px 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h1>在臺人滲</h1>
+    <div class="subtitle">遊玩關卡</div>
+
+    <div class="menu">
+        <a id="lv1" href="game1-1.html" class="level">1-1 械鬥</a>
+        <a id="lv2" href="game2-1.html" class="level locked">2-1 抓姦</a>
+        <a id="lv3" href="game2-2.html" class="level locked">2-2 孩子的未來</a>
+        <a id="lv4" href="game3-1.html" class="level locked">3-1 抓住匪諜</a>
+        <a id="lv5" href="game3-2.html" class="level locked">3-2 蒐集證據</a>
+    </div>
+
+    <button class="reset-btn" onclick="resetProgress()">重置進度 (測試用)</button>
+
+    <script>
+        // 讀取進度，預設為 1
+        let currentProgress = parseInt(localStorage.getItem('formosa_stage')) || 1;
+
+        function updateUI() {
+            for (let i = 2; i <= 5; i++) {
+                if (currentProgress >= i) {
+                    const el = document.getElementById('lv' + i);
+                    if (el) el.classList.remove('locked');
+                }
+            }
+        }
+
+        document.querySelectorAll('.level').forEach(el => {
+            el.addEventListener('click', function(e) {
+                if (this.classList.contains('locked')) {
+                    e.preventDefault();
+                    alert('前置回憶尚未喚醒...');
+                }
+            });
+        });
+
+        function resetProgress() {
+            localStorage.removeItem('formosa_stage');
+            location.reload();
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>
