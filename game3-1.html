@@ -18,12 +18,12 @@
         }
         .apply-shake { animation: shake 0.1s ease-in-out infinite; }
 
-        /* 上半部：佔畫面 1/2 的波浪容器 */
+        /* 上半部：佔畫面 1/2 的波浪容器 (修正：z-index 改為 -1 徹底置底，不擠壓元件) */
         .wave-container { 
             display: none; position: absolute; top: 0; left: 0; width: 100%; height: 50vh; 
             justify-content: center; align-items: flex-end; gap: 4px; padding-bottom: 20px;
             background: linear-gradient(to bottom, rgba(178, 34, 34, 0.15), transparent);
-            pointer-events: none; z-index: 1; box-sizing: border-box;
+            pointer-events: none; z-index: -1; box-sizing: border-box;
         }
 
         .wave-bar { 
@@ -72,7 +72,7 @@
         .lyrics-q { font-size: 1.1rem; margin-bottom: 25px; line-height: 1.6; }
         .blank { border-bottom: 2px solid var(--danger); color: var(--danger); font-weight: bold; padding: 0 5px; }
 
-        .options { display: grid; grid-template-columns: 1fr; gap: 12px; } /* 手機改為單欄更好按 */
+        .options { display: grid; grid-template-columns: 1fr; gap: 12px; } 
         .opt-btn { background: none; border: 1.5px solid var(--ink); padding: 12px; cursor: pointer; font-family: inherit; font-size: 1rem; font-weight: bold; }
 
         /* 全螢幕色塊結局 */
@@ -128,6 +128,13 @@
     </div>
 
 <script>
+    // --- 音效初始化 ---
+    const soundClick = new Audio('3-1點按聲.mp3');
+    const soundDoorBreak = new Audio('3-1撞門聲.mp3');
+    const soundWrong = new Audio('3-1答錯.mp3');
+    soundWrong.volume = 0.4; // 修正：答錯音量調降至 40%
+    // ------------------------
+
     let doubt = 0;
     let timer;
     let currentQ;
@@ -141,7 +148,19 @@
         { q: "想欲（　　）做翁婿，意愛在心內", a: ["官爺", "富商", "郎君", "良人"], c: 2 }
     ];
 
+    // 新增：停止所有音效功能
+    function stopAllSounds() {
+        soundClick.pause();
+        soundClick.currentTime = 0;
+        soundDoorBreak.pause();
+        soundDoorBreak.currentTime = 0;
+        soundWrong.pause();
+        soundWrong.currentTime = 0;
+    }
+
     function toggleMusic() {
+        soundClick.currentTime = 0; soundClick.play(); // 播放點按聲
+
         const p = document.getElementById('player');
         const audio = document.getElementById('bgm');
         const wave = document.getElementById('wave-visual');
@@ -155,6 +174,9 @@
     }
 
     function policeBreakIn() {
+        soundClick.currentTime = 0; soundClick.play(); // 播放點按聲
+        soundDoorBreak.currentTime = 0; soundDoorBreak.play(); // 播放撞門聲
+
         const body = document.getElementById('main-body');
         document.getElementById('bgm').pause();
         body.classList.add('apply-shake');
@@ -183,7 +205,10 @@
             const btn = document.createElement('button');
             btn.className = "opt-btn";
             btn.innerText = opt;
-            btn.onclick = () => check(i);
+            btn.onclick = () => {
+                soundClick.currentTime = 0; soundClick.play(); // 播放點按聲
+                check(i);
+            };
             box.appendChild(btn);
         });
 
@@ -200,21 +225,39 @@
         clearInterval(timer);
         if (idx === currentQ.c) {
             gameState = "FINAL_STORY";
-            showColorOverlay("徐先生被公開處刑的事情被印上報紙，政府想殺雞儆猴......", "WHITE");
+            // 修正：在返回目錄加上 stopAllSounds()
+            const endContent = "徐先生被公開處刑的事情被印上報紙，政府想殺雞儆猴......\n\n" +
+                               "<b>福爾摩沙：</b>「有時候太誠實或抵死不認都不太好呢???畢計是這個時代...」\n\n" +
+                               "<button onclick='event.stopPropagation(); stopAllSounds(); localStorage.setItem(\"formosa_stage\", 5); location.href=\"關卡目錄.html\"' " +
+                               "style='padding: 12px 30px; font-size: 1.1rem; cursor: pointer; font-weight: bold; margin-top: 20px; " +
+                               "font-family: inherit; background: #1a1a1a; color: #fff; border: 1px solid #1a1a1a; border-radius: 4px;'>返回目錄</button>";
+            showColorOverlay(endContent, "WHITE");
         } else {
             handleWrong();
         }
     }
 
     function handleWrong() {
+        soundWrong.currentTime = 0; soundWrong.play(); // 播放答錯音效
+
         doubt++;
         document.getElementById('doubt-fill').style.width = (doubt/3)*100 + "%";
         if (doubt >= 3) {
             gameState = "GAME_OVER";
-            showColorOverlay("徐先生被判定為思想犯，即刻處刑。", "BLACK");
+            // 修正：在返回目錄加上 stopAllSounds()
+            const endContent = "徐先生被判定為思想犯，即刻處刑。\n\n" +
+                               "<button onclick='event.stopPropagation(); stopAllSounds(); location.href=\"關卡目錄.html\"' " +
+                               "style='padding: 12px 30px; font-size: 1.1rem; cursor: pointer; font-weight: bold; margin-top: 20px; " +
+                               "font-family: inherit; background: #1a1a1a; color: #ff0000; border: 1px solid #ff0000; border-radius: 4px;'>返回目錄</button>";
+            showColorOverlay(endContent, "BLACK");
         } else {
             gameState = "WRONG_HINT";
-            showColorOverlay("警察：還敢嘴硬！回去聽清楚再說！", "RED");
+            // 修正：在重新聆聽加上 stopAllSounds()
+            const wrongContent = "警察：還敢嘴硬！回去聽清楚再說！\n\n" +
+                                 "<button onclick='event.stopPropagation(); stopAllSounds(); document.getElementById(\"poster-overlay\").style.display=\"none\"; resetToMusic();' " +
+                                 "style='padding: 12px 30px; font-size: 1.1rem; cursor: pointer; font-weight: bold; margin-top: 20px; " +
+                                 "font-family: inherit; background: #fff; color: #b22222; border: 1px solid #fff; border-radius: 4px;'>重新聆聽</button>";
+            showColorOverlay(wrongContent, "RED");
         }
     }
 
@@ -222,7 +265,7 @@
         const overlay = document.getElementById('poster-overlay');
         const text = document.getElementById('poster-msg');
         overlay.style.display = 'flex';
-        text.innerText = msg;
+        text.innerHTML = msg.replace(/\n/g, '<br>');
 
         if (type === "WHITE") {
             overlay.style.background = "#fff";
@@ -238,22 +281,25 @@
 
     function handlePosterClick() {
         if (gameState === "GAME_OVER") {
-            localStorage.removeItem('formosa_stage');
-            location.href = "index.html";
+            stopAllSounds(); // 點擊黑色背景返回目錄時停止音效
+            location.href = "關卡目錄.html";
         } else if (gameState === "WRONG_HINT") {
             document.getElementById('poster-overlay').style.display = 'none';
-            resetToMusic();
+            resetToMusic(); // resetToMusic 內部已包含 stopAllSounds()
         } else if (gameState === "FINAL_STORY") {
+            stopAllSounds(); // 點擊白色背景返回目錄時停止音效
             localStorage.setItem('formosa_stage', 5);
             location.href = "關卡目錄.html";
         }
     }
 
     function resetToMusic() {
+        stopAllSounds(); // 修正：返回聆聽前先清除所有播放中音效
         document.getElementById('interrogation-phase').style.display = 'none';
-        document.getElementById('music-phase').style.display = 'block';
+        document.getElementById('music-phase').style.display = 'flex'; 
         document.getElementById('player').classList.remove('playing');
         document.getElementById('wave-visual').style.display = 'none';
+        document.getElementById('confirm-btn').style.display = 'none'; 
         document.getElementById('music-status').innerText = "點擊唱片重新聆聽...";
     }
 </script>

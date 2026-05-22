@@ -8,20 +8,15 @@
         :root { --war-red: #cc0000; --gold: #ffcc00; --dark-gray: #1a1a1a; }
         body { background: #000; color: #fff; font-family: "Microsoft JhengHei", sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; }
         
-       /* 極輕微晃動動畫：位移控制在 0.5px~1px */
-@keyframes shake {
-    0% { transform: translate(0px, 0px) rotate(0deg); }
-    20% { transform: translate(-0.5px, 0.5px) rotate(-0.2deg); }
-    40% { transform: translate(-1px, -0.5px) rotate(0.2deg); }
-    60% { transform: translate(1px, 0.5px) rotate(0deg); }
-    80% { transform: translate(-0.5px, -0.5px) rotate(-0.2deg); }
-    100% { transform: translate(0px, 0px) rotate(0deg); }
-}
-
-/* 將動畫時長設為 1.5 秒，並改為只執行一次（或配合 JS 觸發） */
-.apply-shake { 
-    animation: shake 1.5s ease-in-out; 
-}
+        /* 極輕微晃動動畫：位移控制在 0.5px~1px */
+        @keyframes shake {
+            0% { transform: translate(0px, 0px) rotate(0deg); }
+            20% { transform: translate(-0.5px, 0.5px) rotate(-0.2deg); }
+            40% { transform: translate(-1px, -0.5px) rotate(0.2deg); }
+            60% { transform: translate(1px, 0.5px) rotate(0deg); }
+            80% { transform: translate(-0.5px, -0.5px) rotate(-0.2deg); }
+            100% { transform: translate(0px, 0px) rotate(0deg); }
+        }
 
         /* 瀕死閃爍（睜眼閉眼感） */
         @keyframes blinking {
@@ -34,37 +29,75 @@
         .apply-shake { animation: shake 0.2s ease-in-out infinite; }
         .apply-blink { animation: blinking 1.5s infinite; }
 
-        .battle-container { width: 90%; max-width: 400px; border: 3px solid var(--war-red); background: var(--dark-gray); padding: 20px; box-shadow: 0 0 20px rgba(204, 0, 0, 0.5); position: relative; transition: transform 0.1s; }
+        /* 整個關卡呈現長方形佈局 */
+        .battle-container { width: 90%; max-width: 400px; border: 3px solid var(--war-red); background: var(--dark-gray); padding: 20px; box-shadow: 0 0 20px rgba(204, 0, 0, 0.5); position: relative; transition: transform 0.1s; display: flex; flex-direction: column; }
         
         h2 { color: var(--gold); text-align: center; text-transform: uppercase; letter-spacing: 3px; border-bottom: 2px solid var(--war-red); padding-bottom: 10px; margin-top: 0; }
 
-        .status-bar { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; }
-        .hp-container { width: 45%; background: #333; height: 10px; border: 1px solid #fff; margin-top: 5px; }
+        .status-bar { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; font-size: 0.9rem; }
+        .hp-container { width: 100%; background: #333; height: 10px; border: 1px solid #fff; margin-top: 5px; }
         .hp-fill { background: var(--war-red); height: 100%; width: 100%; transition: width 0.5s; }
 
-        #narrative { height: 120px; background: rgba(0,0,0,0.5); padding: 10px; font-size: 0.9rem; line-height: 1.6; border-left: 4px solid var(--gold); overflow-y: auto; margin-bottom: 20px; }
+        /* 圖像化對戰區 (PNG顯示各方出什麼) */
+        .battle-vs-display { display: flex; justify-content: space-around; background: rgba(0,0,0,0.4); padding: 10px; border: 1px solid #444; margin-bottom: 15px; }
+        .vs-box { display: flex; flex-direction: column; align-items: center; width: 35%; }
+        .vs-label { font-size: 0.8rem; color: #aaa; margin-bottom: 5px; }
+        .img-slot { width: 80px; height: 100px; border: 2px dashed #555; display: flex; justify-content: center; align-items: center; background: #000; }
+        .img-slot img { width: 100%; height: 100%; object-fit: contain; }
+        .vs-sign { align-self: center; color: var(--war-red); font-size: 1.5rem; font-weight: bold; font-style: italic; }
 
-        .battle-actions { display: flex; justify-content: space-around; margin-bottom: 15px; }
-        .action-btn { background: #333; border: 2px solid #fff; color: #fff; padding: 10px 20px; cursor: pointer; transition: 0.2s; flex: 1; margin: 0 5px; font-family: inherit; }
+        #narrative { height: 95px; background: rgba(0,0,0,0.5); padding: 10px; font-size: 0.9rem; line-height: 1.6; border-left: 4px solid var(--gold); overflow-y: auto; margin-bottom: 15px; }
+
+        /* 按鈕圖像化與排版穩定 */
+        .battle-actions { display: flex; justify-content: space-around; margin-bottom: 10px; }
+        .action-btn { background: #222; border: 2px solid #fff; color: #fff; padding: 8px 5px; cursor: pointer; transition: 0.2s; flex: 1; margin: 0 5px; font-family: inherit; font-size: 0.8rem; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .action-btn img { width: 48px; height: 60px; object-fit: contain; margin-bottom: 5px; }
         .action-btn:hover { background: var(--war-red); border-color: var(--gold); }
         .action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        .round-info { text-align: center; color: var(--gold); font-size: 0.8rem; margin-top: 10px; }
+        .round-info { text-align: center; color: var(--gold); font-size: 0.8rem; margin-top: 5px; }
+
+        /* 玩家身份提示初始遮罩 */
+        #start-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 150; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .start-title { color: var(--war-red); font-size: 1.4rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 25px; }
+        .identity-card { border: 2px solid var(--gold); padding: 20px; background: var(--dark-gray); margin-bottom: 30px; border-radius: 4px; width: 80%; }
 
         #ending-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 100; padding: 20px; box-sizing: border-box; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        .ending-text { color: #fff; line-height: 1.8; margin-bottom: 20px; }
+        .ending-text { color: #fff; line-height: 1.8; margin-bottom: 20px; font-size: 0.95rem; }
         .system-msg { color: #00ff00; font-family: monospace; font-size: 0.8rem; }
-        .btn-next { background: var(--gold); color: #000; border: none; padding: 10px 20px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .btn-next { background: var(--gold); color: #000; border: none; padding: 12px 25px; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 1rem; letter-spacing: 1px; }
     </style>
 </head>
 <body id="game-body">
 
 <div class="battle-container" id="battle-box">
+    
+    <div id="start-overlay">
+        <div class="start-title">－ 衝突前夕 －</div>
+        <div class="identity-card">
+            <span style="color: #aaa; font-size: 0.9rem;">您當前的玩家身份</span><br><br>
+            <b style="color: var(--gold); font-size: 1.4rem; letter-spacing: 1px;">陳二狗 (泉州)</b>
+        </div>
+        <button class="btn-next" onclick="startGame()">進入械鬥</button>
+    </div>
+
     <h2>1-1 衝突：械鬥</h2>
     
     <div class="status-bar">
-        <div>陳二狗 (泉州)<div class="hp-container"><div id="hp-player" class="hp-fill"></div></div></div>
-        <div style="text-align:right;">對手 (漳州)<div class="hp-container"><div id="hp-enemy" class="hp-fill"></div></div></div>
+        <div style="width: 45%;">陳二狗 (泉州)<div class="hp-container"><div id="hp-player" class="hp-fill"></div></div></div>
+        <div style="text-align:right; width: 45%;">對手 (漳州)<div class="hp-container"><div id="hp-enemy" class="hp-fill"></div></div></div>
+    </div>
+
+    <div class="battle-vs-display">
+        <div class="vs-box">
+            <span class="vs-label">陳二狗</span>
+            <div class="img-slot" id="player-pic"><span style="color:#444; font-size:1.5rem;">?</span></div>
+        </div>
+        <div class="vs-sign">VS</div>
+        <div class="vs-box">
+            <span class="vs-label">漳州對手</span>
+            <div class="img-slot" id="enemy-pic"><span style="color:#444; font-size:1.5rem;">?</span></div>
+        </div>
     </div>
 
     <div id="narrative">
@@ -72,9 +105,9 @@
     </div>
 
     <div class="battle-actions">
-        <button class="action-btn" onclick="play(0)">剪刀</button>
-        <button class="action-btn" onclick="play(1)">石頭</button>
-        <button class="action-btn" onclick="play(2)">布</button>
+        <button class="action-btn" onclick="play(0)"><img src="剪刀.png" alt="剪刀">剪刀</button>
+        <button class="action-btn" onclick="play(1)"><img src="石頭.png" alt="石頭">石頭</button>
+        <button class="action-btn" onclick="play(2)"><img src="布.png" alt="布">布</button>
     </div>
 
     <div class="round-info">回合數: <span id="round-count">0</span> / 5</div>
@@ -91,15 +124,57 @@
     let playerHP = 100;
     let enemyHP = 100;
     const choices = ["剪刀", "石頭", "布"];
+    const imgFiles = ["剪刀.png", "石頭.png", "布.png"];
     const nav = document.getElementById('narrative');
     const battleBox = document.getElementById('battle-box');
+
+    // 初始化音效物件
+    const sndClick = new Audio("1-1點按鈕.mp3");
+    const sndHit = new Audio("1-1打擊聲.mp3");
+    const sndBgm = new Audio("1-1戰鬥bgm.mp3");
+    const sndTinnitus = new Audio("1-1耳鳴.mp3");
+
+    // 設定音效數值
+    sndHit.volume = 0.80; // 打擊音效 80%
+    sndTinnitus.volume = 0.80; // 耳鳴保持 40% 音量
+    sndBgm.loop = true;
+    sndBgm.volume = 0; // 初始音量設為 0，準備淡入
+    const targetBgmVolume = 0.40; // BGM 目標音量 40%
+
+    // 關閉身份提示遮罩，開始遊戲並淡入 BGM
+    function startGame() {
+        // 第一步：先隱藏遮罩，確保畫面不會卡住
+        document.getElementById('start-overlay').style.display = 'none';
+        
+        sndClick.currentTime = 0;
+        sndClick.play().catch(e => console.log("按鈕音效被阻擋:", e));
+        
+        sndBgm.play().then(() => {
+            // 安全的 BGM 淡入邏輯 (使用 Math.min 避免浮點數超標報錯)
+            let fadeInInterval = setInterval(() => {
+                if (sndBgm.volume < targetBgmVolume) {
+                    sndBgm.volume = Math.min(targetBgmVolume, sndBgm.volume + 0.05);
+                } else {
+                    clearInterval(fadeInInterval);
+                }
+            }, 100);
+        }).catch(e => console.log("BGM 播放失敗:", e));
+    }
 
     function play(playerChoice) {
         if (round >= 5) return;
 
+        // 點擊出拳音效
+        sndClick.currentTime = 0;
+        sndClick.play().catch(e => console.log(e));
+
         const enemyChoice = Math.floor(Math.random() * 3);
         round++;
         document.getElementById('round-count').innerText = round;
+
+        // 顯示雙方選擇的 PNG 圖片
+        document.getElementById('player-pic').innerHTML = `<img src="${imgFiles[playerChoice]}" alt="玩家出拳">`;
+        document.getElementById('enemy-pic').innerHTML = `<img src="${imgFiles[enemyChoice]}" alt="對手出拳">`;
 
         // 觸發短暫晃動 (1秒)
         battleBox.classList.add('apply-shake');
@@ -118,9 +193,15 @@
         ) {
             result = "你贏了！重重一擊打在對手身上。";
             enemyHP -= 20;
+            // 贏了有打擊聲音效
+            sndHit.currentTime = 0;
+            sndHit.play().catch(e => console.log(e));
         } else {
             result = "你輸了！被對手推倒在地。";
             playerHP -= 20;
+            // 輸了有打擊聲音效
+            sndHit.currentTime = 0;
+            sndHit.play().catch(e => console.log(e));
         }
 
         document.getElementById('hp-player').style.width = playerHP + "%";
@@ -128,8 +209,25 @@
         nav.innerHTML = `你出了 <b>${choices[playerChoice]}</b>，對方出 <b>${choices[enemyChoice]}</b>。<br>${result}`;
 
         if (round >= 5) {
-            setTimeout(showEnding, 1500);
+            // 回合結束，結果出來時讓 BGM 開始淡出
+            fadeAndShowEnding();
         }
+    }
+
+    // 安全的 BGM 淡出邏輯（使用 Math.max 避免負數報錯）
+    function fadeAndShowEnding() {
+        let fadeInterval = setInterval(() => {
+            if (sndBgm.volume > 0) {
+                sndBgm.volume = Math.max(0, sndBgm.volume - 0.05);
+            } else {
+                sndBgm.pause();
+                clearInterval(fadeInterval);
+            }
+        }, 100);
+
+        setTimeout(() => {
+            showEnding();
+        }, 1500);
     }
 
     function showEnding() {
@@ -146,15 +244,21 @@
         const body = document.getElementById('game-body');
         const btn = document.getElementById('final-btn');
         
-        // 禁用按鈕防止重複點擊
+        sndClick.currentTime = 0;
+        sndClick.play().catch(e => console.log(e));
+
         btn.disabled = true;
         btn.innerText = "意識模糊中...";
 
-        // 觸發忽明忽暗特效
         body.classList.add('apply-blink');
+        
+        // 點選返回目錄時，觸發耳鳴音效
+        sndTinnitus.currentTime = 0;
+        sndTinnitus.play().catch(e => console.log(e));
 
-        // 維持約 3 秒後跳轉
         setTimeout(() => {
+            // 跳轉前停止耳鳴音效
+            sndTinnitus.pause();
             finishGame();
         }, 3000);
     }

@@ -71,6 +71,22 @@
         }
         .final-text { font-family: "標楷體", serif; font-size: 1.5rem; line-height: 1.8; white-space: pre-wrap; }
 
+        /* 新增結局階段按鈕樣式 */
+        .final-btn {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 10px 35px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            font-family: "標楷體", serif;
+            cursor: pointer;
+            background: transparent;
+            border-radius: 4px;
+        }
+        .btn-step1 { color: #000; border: 1.5px solid #666; } /* 黑字灰框 */
+        .btn-step2 { color: #ff0000; border: 1.5px solid #ff0000; } /* 紅字紅框 */
+        .btn-step3 { color: #ff0000; border: 1.5px solid #ff0000; } /* 紅字紅框 */
+
         .flash-white { animation: flashEffect 0.3s forwards; }
         @keyframes flashEffect { 0% { background: #fff; } 100% { background: #000; } }
     </style>
@@ -101,14 +117,14 @@
         <button onclick="closeReport()">繼續搜查</button>
     </div>
 
-    <div id="final-overlay" onclick="handleFinalClick()">
+    <div id="final-overlay">
         <div class="final-text" id="final-msg"></div>
     </div>
 
-    <audio id="bgm" src="creepy.mp3" loop></audio> 
-    <audio id="snd-click" src="button03a.mp3"></audio> 
-    <audio id="snd-shot" src="game_explosion1.mp3"></audio> 
-    <audio id="snd-error" src="blip01.mp3"></audio>
+    <audio id="bgm" src="3-2bgm.mp3" loop></audio> 
+    <audio id="snd-click" src="3-2點按聲.mp3"></audio> 
+    <audio id="snd-shot" src="3-2gun.mp3"></audio> 
+    <audio id="snd-error" src="3-2宣告.mp3"></audio>
 
 <script>
     const gameArea = document.getElementById('game-area');
@@ -243,27 +259,36 @@
         }
     }
 
+    // 修正：觸發結局階段 1，並注入黑字灰框的「翻頁」按鈕
     function triggerEnd() {
         const final = document.getElementById('final-overlay');
         final.style.display = 'flex';
         final.style.background = "#fff";
-        document.getElementById('final-msg').innerText = "【搜捕公告】\n1947年，警方於台史博二樓破獲匪諜行動。\n現場查獲大量非法禁書。嫌疑犯陳志銘企圖滅證，當場逮捕。";
+        document.getElementById('final-msg').innerHTML = 
+            "【搜捕公告】<br>1947年，警方於台史博二樓破獲匪諜行動。<br>現場查獲大量非法禁書。嫌疑犯陳志銘企圖滅證，當場逮捕。<br><br>" +
+            "<button class='final-btn btn-step1' onclick='advanceFinal()'>翻頁</button>";
         document.getElementById('final-msg').style.color = "#000";
         finalStep = 1;
     }
 
-    function handleFinalClick() {
+    // 修正：獨立出按鈕點擊控制的流程推進函式
+    function advanceFinal() {
         const body = document.getElementById('main-body');
+        
         if (finalStep === 1) {
             playSnd('snd-shot');
             body.classList.add('flash-white');
             document.getElementById('final-overlay').style.background = "#000";
-            document.getElementById('final-msg').innerText = "【判決執行】\n陳志銘，涉嫌傳播危險思想，罪證確鑿。\n判處死刑，即刻執行。";
+            document.getElementById('final-msg').innerHTML = 
+                "【判決執行】<br>陳志銘，涉嫌傳播危險思想，罪證確鑿。<br>判處死刑，即刻執行。<br><br>" +
+                "<button class='final-btn btn-step2' onclick='advanceFinal()'>翻頁</button>";
             document.getElementById('final-msg').style.color = "#ff0000";
             finalStep = 2;
         } else if (finalStep === 2) {
             playSnd('snd-shot');
-            document.getElementById('final-msg').innerText = "他最後的聲音渺小如蚊子...無人在意......\n但在卷宗裡，他只是一個被劃掉的名字。\n\n結案。";
+            document.getElementById('final-msg').innerHTML = 
+                "他最後的聲音渺小如蚊子...無人在意......<br>但在卷宗裡，他只是一個被劃掉的名字。<br><br>結案。<br><br>" +
+                "<button class='final-btn btn-step3' onclick='advanceFinal()'>結案</button>";
             document.getElementById('final-msg').style.color = "#666";
             finalStep = 3;
         } else if (finalStep === 3) {

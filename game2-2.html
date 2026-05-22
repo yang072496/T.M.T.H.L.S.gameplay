@@ -91,6 +91,29 @@
         }
 
         .chance-text { font-size: 0.8rem; color: #555; margin-top: 12px; font-weight: bold; }
+
+        /* 新增：置中、最上層的返回目錄按鈕樣式 */
+        #center-return-btn {
+            display: none; /* 初始隱藏 */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            background: var(--accent-red);
+            color: white;
+            border: 2px solid #fff;
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+            transition: 0.2s;
+        }
+        #center-return-btn:hover {
+            background: #a00000;
+            transform: translate(-50%, -50%) scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -112,12 +135,32 @@
     </div>
 </div>
 
+<button id="center-return-btn" onclick='soundClick.currentTime=0; soundClick.play(); setTimeout(function(){ location.href="關卡目錄.html"; }, 200);'>返回目錄</button>
+
 <script>
     const canvas = document.getElementById('wheelCanvas');
     const ctx = canvas.getContext('2d');
     const spinBtn = document.getElementById('spinBtn');
     let chances = 3;
     
+    // --- 音效音訊初始化 ---
+    const soundClick = new Audio('2-2點按聲.mp3');
+    soundClick.volume = 0.7; // 點按聲 70%
+
+    const soundSpinStart = new Audio('2-2轉盤開始聲.mp3');
+    soundSpinStart.volume = 1.0; // 轉盤開始聲 100%
+    soundSpinStart.loop = true; 
+
+    const soundStop = new Audio('2-2轉盤停下.mp3');
+    soundStop.volume = 0.9; // 轉盤停下 90%
+
+    const soundSuccess = new Audio('2-2成功.mp3');
+    soundSuccess.volume = 1.0; // 成功判定音效 100%
+
+    const soundFail = new Audio('2-2失敗.mp3');
+    soundFail.volume = 1.0; // 失敗判定音效 100%
+    // -----------------------------------------------------------
+
     const sectors = [
         { label: "失敗//流浪", color: "#666", win: false },
         { label: "成功//希望", color: "#8b0000", win: true },
@@ -159,11 +202,27 @@
 
     function animateSpin() {
         if (!spinIsActive) return;
-        spinVelocity *= friction; 
+
+        // 當速度低於 0.05 時，觸發強力煞車
+        if (spinVelocity < 0.05) {
+            spinVelocity *= 0.6; 
+        } else {
+            spinVelocity *= friction; 
+        }
+        
         angle += spinVelocity; 
-        if (spinVelocity < 0.002) {
+        
+        // 判定完全停止
+        if (spinVelocity < 0.001) {
             spinIsActive = false;
             spinVelocity = 0;
+            
+            soundSpinStart.pause();
+            soundSpinStart.currentTime = 0; 
+            
+            soundStop.currentTime = 0;
+            soundStop.play();
+
             determineResult();
         } else {
             draw();
@@ -173,9 +232,17 @@
 
     function spin() {
         if (spinIsActive || chances <= 0 || spinBtn.dataset.ended === "true") return;
+        
+        soundClick.currentTime = 0;
+        soundClick.play();
+
         chances--;
         document.getElementById('chances').innerText = chances;
         spinBtn.disabled = true;
+
+        soundSpinStart.currentTime = 0;
+        soundSpinStart.play();
+
         spinVelocity = Math.random() * 0.15 + 0.3; 
         spinIsActive = true;
         animateSpin();
@@ -190,19 +257,31 @@
         const nav = document.getElementById('narrative');
 
         if (result.win) {
+            soundSuccess.currentTime = 0;
+            soundSuccess.play();
+
             spinBtn.dataset.ended = "true";
             spinBtn.disabled = true;
             spinBtn.innerHTML = "已達成結局";
             
-            // 儲存進度：解鎖 3-1 (清單中第 4 個關卡)
             localStorage.setItem('formosa_stage', 4);
             
             nav.innerHTML = "<b>【成功】</b> 志銘順利翻過院牆，落入孤兒院的草堆中。妳忍著淚遠去，至少他不必陪妳在街頭餓死。";
             setTimeout(nextChapter, 4000);
         } else if (chances > 0) {
+            // 控制失敗音效於 1~3s 播放
+            soundFail.currentTime = 1;
+            soundFail.play();
+            setTimeout(() => { soundFail.pause(); }, 2000);
+
             nav.innerHTML = "<b>【失敗】</b> 志銘重重摔在地上。孩子大聲啼哭，引起了巡警的注意，妳趕緊抱起他逃進暗巷。妳還有 " + chances + " 次機會。";
             spinBtn.disabled = false; 
         } else {
+            // 控制失敗音效於 1~3s 播放
+            soundFail.currentTime = 1;
+            soundFail.play();
+            setTimeout(() => { soundFail.pause(); }, 2000);
+
             spinBtn.dataset.ended = "true";
             spinBtn.disabled = true;
             spinBtn.innerHTML = "次數已耗盡";
@@ -214,8 +293,9 @@
 
     function nextChapter() {
         const nav = document.getElementById('narrative');
-        nav.innerHTML = "<b>福爾摩沙：</b>「以上是這段愛情故事的終點...」<br><br>" +
-                        "<button onclick='location.href=\"關卡目錄.html\"' style='padding:10px; cursor:pointer;'>返回目錄</button>";
+        nav.innerHTML = "<b>福爾摩沙：</b>「以上是這段愛情故事的終點...」";
+        // 顯示置中且在最上層的返回目錄按鈕
+        document.getElementById('center-return-btn').style.display = "block";
     }
 
     draw();

@@ -8,13 +8,11 @@
         :root { --army-green: #4b5320; --blood-red: #8b0000; --pixel-white: #eeeeee; }
         body { 
             background: #000; color: var(--pixel-white); 
-            font-family: "Courier New", Courier, monospace; /* 模擬 8-bit 感 */
+            font-family: "Courier New", Courier, monospace; 
             margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh;
-            transition: background 1s ease; /* 背景變色動畫 */
             overflow: hidden;
         }
         
-        /* 劇烈震動特效 */
         @keyframes shake {
             0% { transform: translate(1px, 1px) rotate(0deg); }
             10% { transform: translate(-1px, -2px) rotate(-1deg); }
@@ -29,7 +27,6 @@
             100% { transform: translate(1px, -2px) rotate(-1deg); }
         }
 
-        /* 警報閃爍 */
         @keyframes danger-flash {
             0% { background-color: #000; }
             50% { background-color: #ff0000; }
@@ -37,9 +34,8 @@
         }
 
         .apply-shake { animation: shake 0.15s infinite; }
-        .apply-flash { animation: danger-flash 0.1s infinite; }
+        .apply-flash { animation: danger-flash 0.1s infinite !important; }
 
-        /* 8-bit 格點背景效果 */
         .grid-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), 
@@ -47,35 +43,68 @@
             background-size: 4px 4px; pointer-events: none; z-index: 10;
         }
 
+        /* 8-Bit 呼吸感背景層 */
+        #breath-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 1;
+            transition: background 1s ease;
+            animation: pixel-breath var(--breath-speed, 3.5s) infinite ease-in-out;
+        }
+        @keyframes pixel-breath {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.73; } 
+        }
+
+        /* 轉場黑色色塊 */
+        #transition-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 999; 
+            opacity: 0; pointer-events: none; 
+            transition: opacity 0.5s ease;
+        }
+
         .battle-box { 
-            width: 95%; max-width: 450px; background: rgba(20, 20, 20, 0.9); 
-            border: 4px solid var(--pixel-white); padding: 15px; position: relative; z-index: 20;
+            width: 90%; max-width: 360px; background: rgba(20, 20, 20, 0.92); 
+            border: 4px solid var(--pixel-white); padding: 25px 20px; position: relative; z-index: 20;
+            box-sizing: border-box; box-shadow: 0 0 20px rgba(0,0,0,0.8);
         }
 
         .officer-frame {
             width: 120px; height: 150px; border: 2px solid var(--pixel-white);
-            margin: 0 auto 15px; background: #333; display: flex;
-            justify-content: center; align-items: center; text-align: center; font-size: 0.7rem;
+            margin: 0 auto 20px; background: #333; display: flex;
+            justify-content: center; align-items: center; text-align: center;
         }
+        
+        .officer-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-        .stat-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.8rem; }
-        .bar-bg { width: 100px; height: 10px; background: #333; border: 1px solid #fff; display: inline-block; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 0.8rem; }
+        .bar-bg { width: 90px; height: 10px; background: #333; border: 1px solid #fff; display: inline-block; }
         .bar-fill { height: 100%; width: 0%; transition: width 0.3s; }
         #anger-fill { background: var(--blood-red); }
         #dissatisfy-fill { background: #ffcc00; }
 
         #dialogue-box { 
-            min-height: 100px; border: 2px solid #555; padding: 10px; margin-bottom: 15px;
-            font-size: 0.9rem; line-height: 1.5; background: rgba(0,0,0,0.8);
+            min-height: 120px; border: 2px solid #555; padding: 12px; margin-bottom: 20px;
+            font-size: 0.9rem; line-height: 1.6; background: rgba(0,0,0,0.85);
         }
 
-        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .options-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
         .option-btn { 
             background: none; border: 2px solid var(--pixel-white); color: var(--pixel-white);
-            padding: 10px; cursor: pointer; font-size: 0.8rem; text-align: left;
+            padding: 12px; cursor: pointer; font-size: 0.85rem; text-align: left;
+            line-height: 1.4;
         }
         .option-btn:hover { background: var(--pixel-white); color: #000; }
         .option-btn:disabled { opacity: 0.3; }
+
+        @keyframes optionFadeIn {
+            from { opacity: 0; pointer-events: none; transform: translateY(5px); }
+            to { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        }
+        .delayed-option {
+            opacity: 0;
+            animation: optionFadeIn 0.3s ease 0.5s forwards; 
+        }
 
         #final-screen {
             display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -83,52 +112,17 @@
             text-align: center; padding: 20px; box-sizing: border-box; z-index: 100;
         }
 
-/* 預警畫面樣式 */
-#warning-overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: #000;
-    z-index: 9999; /* 確保在最上層 */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 20px;
-    box-sizing: border-box;
-}
+        #warning-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 9999; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center; padding: 20px; box-sizing: border-box;
+        }
 
-.warning-box {
-    border: 2px solid #ff0000;
-    padding: 30px;
-    max-width: 400px;
-}
-
-.warning-title {
-    color: #ff0000;
-    font-weight: bold;
-    font-size: 1.5rem;
-    margin-bottom: 20px;
-}
-
-.warning-text {
-    font-size: 0.9rem;
-    line-height: 1.6;
-    color: #eee;
-    margin-bottom: 30px;
-}
-
-.warning-btn {
-    background: #fff;
-    color: #000;
-    border: none;
-    padding: 10px 30px;
-    font-weight: bold;
-    cursor: pointer;
-    font-family: inherit;
-}
-.warning-btn:hover { background: #ff0000; color: #fff; }
+        .warning-box { border: 2px solid #ff0000; padding: 30px; max-width: 400px; }
+        .warning-title { color: #ff0000; font-weight: bold; font-size: 1.5rem; margin-bottom: 20px; }
+        .warning-text { font-size: 0.9rem; line-height: 1.6; color: #eee; margin-bottom: 30px; }
+        .warning-btn { background: #fff; color: #000; border: none; padding: 10px 30px; font-weight: bold; cursor: pointer; font-family: inherit; }
+        .warning-btn:hover { background: #ff0000; color: #fff; }
     </style>
 </head>
 <body>
@@ -144,7 +138,8 @@
     </div>
 </div>
 
-
+<div id="breath-layer"></div>
+<div id="transition-overlay"></div>
 <div class="grid-overlay"></div>
 
 <div class="battle-box" id="main-box">
@@ -153,33 +148,53 @@
         <span>憤怒值 (答錯) <div class="bar-bg"><div id="anger-fill" class="bar-fill"></div></div></span>
     </div>
 
-    <div class="officer-frame">[ 山上番跤 <br> 軍官形象圖 ]</div>
+    <div class="officer-frame">
+        <img id="main-officer-img" class="officer-img" src="山上番跤-傲慢.png" alt="山上番跤">
+    </div>
 
     <div id="dialogue-box">
         詩芶鯉㐻和陳銘雄私下進行約會的時候，被山上番跤逮個正著。身為陳銘雄的你即將跟山上番進行一場死亡問答...
     </div>
 
     <div class="options-grid" id="options">
-        <button class="option-btn" onclick="startQuiz()" style="grid-column: span 2; text-align: center;">...開始問答</button>
+        <button class="option-btn" onclick="startQuiz()" style="text-align: center;">...開始問答</button>
     </div>
 
     <div id="final-screen">
+        <div class="officer-frame" style="margin-bottom: 20px;">
+            <img id="final-officer-img" class="officer-img" src="" alt="結局頭像">
+        </div>
         <div id="final-text"></div>
         <button class="option-btn" onclick="nextLevel()" style="margin-top:20px; text-align: center;">進入下一回憶</button>
     </div>
 </div>
 
 <script>
+    // --- 音效宣告與設定 ---
+    const sndClick = new Audio('2-1點按聲.mp3');
+    const sndBgm = new Audio('2-1心跳bgm.mp3');
+    sndBgm.loop = true; // 心跳背景音樂循環播放
+    const sndCorrect = new Audio('2-1答對.mp3');
+    const sndWrong = new Audio('2-1答錯.mp3');
+    const sndAngry = new Audio('2-1暴怒.mp3');
+    const sndHandcuff = new Audio('2-1手銬.mp3');
 
-function acceptWarning() {
-    const warning = document.getElementById('warning-overlay');
-    // 增加一個簡單的淡出效果
-    warning.style.transition = "opacity 0.5s";
-    warning.style.opacity = "0";
-    setTimeout(() => {
-        warning.style.display = 'none';
-    }, 500);
-}
+    // 通用音效播放函數，每次播放重置時間軸避免連續點擊失效
+    function playSound(audio) {
+        audio.currentTime = 0;
+        audio.play().catch(e => console.log("音效播放被瀏覽器阻擋:", e));
+    }
+
+    function acceptWarning() {
+        playSound(sndClick); // 播放點擊聲
+        playSound(sndBgm);   // 開始啟動心跳 BGM
+        const warning = document.getElementById('warning-overlay');
+        warning.style.transition = "opacity 0.5s";
+        warning.style.opacity = "0";
+        setTimeout(() => {
+            warning.style.display = 'none';
+        }, 500);
+    }
 
     let currentStep = 0;
     let anger = 0;
@@ -224,12 +239,19 @@ function acceptWarning() {
     function updateBars() {
         document.getElementById('anger-fill').style.width = (anger * 25) + "%";
         document.getElementById('dissatisfy-fill').style.width = (dissatisfy * 25) + "%";
-        // 背景隨題數與憤怒值變紅，最高到第五題全紅
+        
         let redIntensity = Math.min(255, (currentStep * 50) + (anger * 20));
-        document.body.style.backgroundColor = `rgb(${redIntensity}, 0, 0)`;
+        const breathLayer = document.getElementById('breath-layer');
+        breathLayer.style.backgroundColor = `rgb(${redIntensity}, 0, 0)`;
+        
+        let breathSpeeds = ["3.5s", "2.8s", "2.1s", "1.5s", "1.1s", "0.8s"];
+        breathLayer.style.setProperty('--breath-speed', breathSpeeds[currentStep] || "0.8s");
     }
 
-    function startQuiz() { showQuestion(); }
+    function startQuiz() { 
+        playSound(sndClick); // 播放點擊聲
+        showQuestion(); 
+    }
 
     function showQuestion() {
         const item = quiz[currentStep];
@@ -239,7 +261,7 @@ function acceptWarning() {
 
         item.options.forEach((opt, index) => {
             const btn = document.createElement('button');
-            btn.className = "option-btn";
+            btn.className = "option-btn delayed-option";
             btn.innerText = opt;
             btn.onclick = () => handleAnswer(index);
             optContainer.appendChild(btn);
@@ -255,61 +277,87 @@ function acceptWarning() {
 
         const item = quiz[currentStep];
         if (item.correct === -1) {
+            playSound(sndCorrect); // 第二題特殊對話，播放回饋音效
             document.getElementById('dialogue-box').innerText = item.okMsg;
         } else if (choice === item.correct) {
             dissatisfy++;
+            playSound(sndCorrect); // 播放答對/不滿值上升音效
             document.getElementById('dialogue-box').innerText = item.okMsg;
         } else {
             anger++;
+            playSound(sndWrong);   // 播放答錯/憤怒值上升音效
             document.getElementById('dialogue-box').innerText = item.failMsg;
         }
 
         currentStep++;
         const optContainer = document.getElementById('options');
-        optContainer.innerHTML = `<button class="option-btn" onclick="showQuestion()" style="grid-column: span 2; text-align: center;">下一個問題...</button>`;
+        // 下一個問題按鈕加入點擊聲呼叫
+        optContainer.innerHTML = `<button class="option-btn" onclick="playSound(sndClick); showQuestion()" style="text-align: center;">下一個問題...</button>`;
         updateBars();
     }
 
-function handleFinal(choice) {
-    const overlay = document.getElementById('final-screen');
-    const fText = document.getElementById('final-text');
-    const mainBox = document.getElementById('main-box');
-    const body = document.body;
+    function handleFinal(choice) {
+        // 心跳戛然而止：立刻暫停背景心跳聲並歸零
+        sndBgm.pause();
+        sndBgm.currentTime = 0;
 
-    if (choice === 2 || choice === 3) { // 選擇挑釁 C 或 D (憤怒紅)
-        mainBox.classList.add('apply-shake');
-        body.classList.add('apply-flash');
+        const overlay = document.getElementById('final-screen');
+        const fText = document.getElementById('final-text');
+        const mainBox = document.getElementById('main-box');
+        
+        const mainImg = document.getElementById('main-officer-img');
+        const finalImg = document.getElementById('final-officer-img');
+        const transitionBg = document.getElementById('transition-overlay');
+        const breathLayer = document.getElementById('breath-layer');
 
+        let isAngry = (choice === 2 || choice === 3);
+        let targetImgSrc = isAngry ? "山上番跤-暴怒.png" : "山上番跤-冷漠.png";
+
+        // 1. 黑幕淡入
+        transitionBg.style.opacity = "1";
+
+        // 2. 等待 0.5s 黑幕完全覆蓋後切換與爆發結局音效
         setTimeout(() => {
+            mainImg.src = targetImgSrc;
+            finalImg.src = targetImgSrc;
+
+            if (isAngry) { 
+                playSound(sndAngry); // 畫面亮起與震動瞬間，播放暴怒音效
+                mainBox.classList.add('apply-shake');
+                breathLayer.classList.add('apply-flash'); 
+
+                setTimeout(() => {
+                    mainBox.classList.remove('apply-shake');
+                    breathLayer.classList.remove('apply-flash');
+                    breathLayer.style.backgroundColor = "#400"; 
+                }, 800);
+                
+                fText.innerHTML = "<h1 style='color:#ff0000; text-shadow: 0 0 10px #ff0000;'>放肆！！</h1>" + 
+                    "軍官山上番跤勃然大怒，訓斥眼前一點價值都沒有的陳銘雄，並命人將你抓起來！<br><br>" +
+                    "離開時他給了詩芶鯉㐻一個冷漠的神情，而她只顧著看著陳銘雄被帶走的背影...";
+            } else { 
+                playSound(sndHandcuff); // 畫面亮起瞬間，播放手銬落鎖音效
+                breathLayer.style.transition = "background 2s ease"; 
+                breathLayer.style.backgroundColor = "#001a33"; 
+                breathLayer.style.animation = "none"; 
+                
+                overlay.style.borderColor = "#0066cc";
+                
+                fText.innerHTML = "<h2 style='color:#66b3ff;'>沈默與無力...</h2>" +
+                    "山上番跤發出冷冽的笑聲。陳銘雄低著頭，直接被粗魯地帶走。<br><br>" +
+                    "離開時軍官給了詩芶鯉㐻一個冷漠的神情...<br>而她始終沒有移開視線，默默看著陳銘雄逐漸遠去的背影。";
+            }
+
             overlay.style.display = 'flex';
-            fText.innerHTML = "<h1 style='color:#ff0000; text-shadow: 0 0 10px #ff0000;'>放肆！！</h1>" + 
-                "軍官山上番跤勃然大怒，訓斥眼前一點價值都沒有的陳銘雄，並命人將你抓起來！<br><br>" +
-                "離開時他給了詩芶鯉㐻一個冷漠的神情，而她只顧著看著陳銘雄被帶走的背影...";
-            mainBox.classList.remove('apply-shake');
-            body.classList.remove('apply-flash');
-            body.style.backgroundColor = "#400"; // 停留在深紅色
-        }, 800);
-        
-    } else { // 選擇 A 或 B (憂鬱藍)
-        // 平滑轉場到深藍色調
-        body.style.transition = "background 2s ease"; 
-        body.style.backgroundColor = "#001a33"; // 舒服的深藍色系
-        
-        setTimeout(() => {
-            overlay.style.display = 'flex';
-            // 將按鈕與邊框稍微染藍，增加整體感
-            overlay.style.borderColor = "#0066cc";
-            
-            fText.innerHTML = "<h2 style='color:#66b3ff;'>沈默與無力...</h2>" +
-                "山上番跤發出冷冽的笑聲。陳銘雄低著頭，直接被粗魯地帶走。<br><br>" +
-                "離開時軍官給了詩芶鯉㐻一個冷漠的神情...<br>而她始終沒有移開視線，默默看著陳銘雄逐漸遠去的背影。";
+            transitionBg.style.opacity = "0";
+
         }, 500);
     }
-}
 
     function nextLevel() {
+        playSound(sndClick); // 播放點擊聲
         localStorage.setItem('formosa_stage', 3); 
-               location.href = "關卡目錄.html"; 
+        location.href = "關卡目錄.html"; 
     }
 </script>
 </body>

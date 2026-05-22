@@ -20,7 +20,9 @@
         }
         /* 灰字灰框 (未解鎖) */
         .locked { color: #666 !important; border-color: #444 !important; cursor: not-allowed; }
-        .reset-btn { margin-top: 40px; background: none; color: #ff0000; border: 1px solid #ff0000; padding: 5px 10px; cursor: pointer; }
+        
+        /* 新增：暗紅色 (已遊玩/鎖定) */
+        .locked-played { color: #8b0000 !important; border-color: #8b0000 !important; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -36,17 +38,28 @@
         <a id="lv5" href="game3-2.html" class="level locked">3-2 蒐集證據</a>
     </div>
 
-    <button class="reset-btn" onclick="resetProgress()">重置進度</button>
+    <audio id="snd-click" src="目錄點擊聲.mp3"></audio>
 
     <script>
         // 讀取進度，預設為 1
         let currentProgress = parseInt(localStorage.getItem('formosa_stage')) || 1;
 
         function updateUI() {
-            for (let i = 2; i <= 5; i++) {
-                if (currentProgress >= i) {
-                    const el = document.getElementById('lv' + i);
-                    if (el) el.classList.remove('locked');
+            for (let i = 1; i <= 5; i++) {
+                const el = document.getElementById('lv' + i);
+                if (!el) continue;
+
+                if (i < currentProgress) {
+                    // 已遊玩過：變暗紅色並鎖上
+                    el.classList.add('locked-played');
+                    el.classList.remove('locked');
+                } else if (i === currentProgress) {
+                    // 當前可遊玩：維持白色
+                    el.classList.remove('locked', 'locked-played');
+                } else {
+                    // 尚未解鎖：維持灰色
+                    el.classList.add('locked');
+                    el.classList.remove('locked-played');
                 }
             }
         }
@@ -54,16 +67,26 @@
         document.querySelectorAll('.level').forEach(el => {
             el.addEventListener('click', function(e) {
                 if (this.classList.contains('locked')) {
+                    // 阻擋未解鎖關卡
                     e.preventDefault();
                     alert('前置回憶尚未喚醒...');
+                } else if (this.classList.contains('locked-played')) {
+                    // 阻擋已遊玩關卡
+                    e.preventDefault();
+                    // 你可以在這裡加入 alert，例如：alert('此段回憶已結束，無法再次進入。');
+                } else {
+                    // 正常進入當前關卡：阻止預設跳轉 -> 播放音效 -> 延遲跳轉
+                    e.preventDefault(); 
+                    const clickSound = document.getElementById('snd-click');
+                    clickSound.currentTime = 0;
+                    clickSound.play().catch(err => console.log('音效播放失敗:', err));
+                    
+                    setTimeout(() => {
+                        window.location.href = this.href;
+                    }, 300); // 延遲 300 毫秒確保音效能被聽到
                 }
             });
         });
-
-        function resetProgress() {
-            localStorage.removeItem('formosa_stage');
-            location.reload();
-        }
 
         updateUI();
     </script>
